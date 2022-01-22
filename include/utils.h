@@ -11,7 +11,7 @@
 #endif
 
 template<typename T>
-inline void print(const T&& log) {{
+inline void print(const T& log) {{
     using namespace std;
     time_t now = time(0);
     cout << put_time(localtime(&now), "%F %T%z: ") << log << endl;
