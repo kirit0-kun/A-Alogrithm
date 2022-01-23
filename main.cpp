@@ -138,27 +138,17 @@ inline void print_road(const std::vector<Node> road) {
     LOG(s.str().c_str());
 }
 
-inline void print_board(const board_type& board, const std::vector<Node> road) {
-    for (int i =0; i < board.size(); i++) {
-        auto row = board[i];
-        std::stringstream line;
-        for (int j =0; j < row.size(); j++) {
-            auto element = row[j];
-            auto pos = Pos(j,i);
-            auto last = std::find_if(road.begin(),
-                                     road.end(),
-                                     [&](auto node) {
-                return node.pos == pos;
-            });
-            if (last != road.end()) {
-                line << "🚗  ";
-            } else {
-                line << cell_string(element);
-            }
-        }
-        LOG(line.str().c_str());
-    }
-}
+//inline void print_board(const board_type& board, const std::vector<Node> road) {
+//    for (int i =0; i < board.size(); i++) {
+//        auto row = board[i];
+//        std::stringstream line;
+//        for (int j =0; j < row.size(); j++) {
+//            auto element = row[j];
+//            line << cell_string(element);
+//        }
+//        LOG(line.str().c_str());
+//    }
+//}
 
 inline void search_board(board_type& board,const Pos& start, const Pos& end) {
     std::vector<Node> close;
@@ -186,7 +176,7 @@ inline void search_board(board_type& board,const Pos& start, const Pos& end) {
         }
     }
 
-    print_board(board, close);
+    print_board(board);
     print_road(close);
 }
 
