@@ -12,10 +12,13 @@ typedef unsigned short element_type;
 
 enum State: element_type {
     kEmpty = 0,
-    kObstacle = 1
-    kStart = 2
-    kFinish = 3
+    kObstacle = 1,
+    kStart = 2,
+    kFinish = 3,
+    kExpanded = 4
 };
+
+
 
 inline std::string cell_string(const State& state) {
     switch(state) {
@@ -27,6 +30,8 @@ inline std::string cell_string(const State& state) {
         return "🚦  ";
     case ::kFinish:
         return "🏁  ";
+    case ::kExpanded:
+        return "🚗  ";
     }
     return "";
 }
@@ -67,11 +72,12 @@ inline void print_board(const board_type& board) {
     }
 }
 
-inline bool is_node_empty(const board_type& board, int x, int y) {
+inline bool is_node_valid(const board_type& board, int x, int y) {
     if (board.size() <= y) return false;
     const auto& row = board.at(y);
     if (row.size() <= x) return false;
-    return row.at(x) == ::kEmpty;
+    auto state = row.at(x);
+    return state != ::kObstacle && state != ::kExpanded;
 }
 
 struct Pos {
@@ -92,19 +98,23 @@ inline constexpr int heuristic_function(const Pos& pos, const Pos& goal) {
     return std::abs(goal.x - pos.x) + std::abs(goal.y - pos.y);
 }
 
-inline std::vector<Node> expand_node(const board_type& board, const Node& node, const Pos& end) {
+inline std::vector<Node> expand_node(board_type& board, const Node& node, const Pos& end) {
     std::vector<Node> nodes;
     int new_g_value = node.g + 1;
     auto& pos = node.pos;
+    auto board_row = board.at(pos.y);
+    board_row[pos.x] = ::kExpanded;
+    board[pos.y] = board_row;
     Node nodes_to_text[4] = {
       {{  pos.x, pos.y-1}, new_g_value},
       {{  pos.x, pos.y+1}, new_g_value},
       {{pos.x-1,   pos.y}, new_g_value},
       {{pos.x+1,   pos.y}, new_g_value}
     };
+
     for (auto& n: nodes_to_text) {
         n.f = n.g + heuristic_function(n.pos, end);
-        if (is_node_empty(board, n.pos.x, n.pos.y)) {
+        if (is_node_valid(board, n.pos.x, n.pos.y)) {
             nodes.push_back(std::move(n));
         }
     }
@@ -150,8 +160,7 @@ inline void print_board(const board_type& board, const std::vector<Node> road) {
     }
 }
 
-inline void search_board(const board_type& board,const Pos& start, const Pos& end) {
-    std::vector<Pos> expansion{start};
+inline void search_board(board_type& board,const Pos& start, const Pos& end) {
     std::vector<Node> close;
     std::vector<Node> open{ {start, 0} };
 
@@ -161,13 +170,8 @@ inline void search_board(const board_type& board,const Pos& start, const Pos& en
         open.erase(open.begin());
         close.push_back(std::move(node));
         auto new_expansion = expand_node(board, node, end);
-        std::erase_if(new_expansion, [&](auto& new_node){
-            return std::find(expansion.begin(), expansion.end(), new_node.pos) != expansion.end();
-        });
+
         if (new_expansion.size() != 0) {
-            for (auto& node: new_expansion) {
-                expansion.push_back(node.pos);
-            }
             auto last = std::find_if(new_expansion.begin(),
                                      new_expansion.end(),
                                      [&end](auto node) {
@@ -184,7 +188,6 @@ inline void search_board(const board_type& board,const Pos& start, const Pos& en
 
     print_board(board, close);
     print_road(close);
-    print_road(expansion);
 }
 
 int main(int argc, const char** argv) {
