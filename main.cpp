@@ -66,32 +66,31 @@ inline board_type parse_board(std::istream& board) {
 inline board_type read_board(const std::string& board_file) {
     std::ifstream ifs(board_file);
     if (!ifs.good()) {
-        throw std::exception("File ");
+        ifs = std::ifstream(std::string("../") + board_file);
+        if (!ifs.good()) {
+            throw std::exception("File not found!");
+        }
     }
     return parse_board(ifs);
 }
 
-inline struct Pos get_board_start(const board_type& board) {
+inline struct Pos get_board_node(const board_type& board, const State& state) {
     for (int y = 0; y < board.size(); y++) {
         for (int x = 0; x < board[y].size(); x++) {
-            if (board[y][x] == State::kStart) {
-                return {x,y};
-            }
-        }
-    }
-    return { 0,0 };
-}
-
-inline struct Pos get_board_end(const board_type& board) {
-    int x = 0, y = 0;
-    for (y = 0; y < board.size(); y++) {
-        for (x = 0; x < board[y].size(); x++) {
-            if (board[y][x] == State::kFinish) {
+            if (board[y][x] == state) {
                 return { x,y };
             }
         }
     }
-    return {x-1 , y-1};
+    return {0, 0};
+}
+
+inline struct Pos get_board_start(const board_type& board) {
+    return get_board_node(board, State::kStart);
+}
+
+inline struct Pos get_board_end(const board_type& board) {
+    return get_board_node(board, State::kFinish);
 }
 
 inline void print_board(const board_type& board) {
@@ -162,18 +161,6 @@ inline void print_road(const std::vector<Node> road) {
     LOG(s.str().c_str());
 }
 
-//inline void print_board(const board_type& board, const std::vector<Node> road) {
-//    for (int i =0; i < board.size(); i++) {
-//        auto row = board[i];
-//        std::stringstream line;
-//        for (int j =0; j < row.size(); j++) {
-//            auto element = row[j];
-//            line << cell_string(element);
-//        }
-//        LOG(line.str().c_str());
-//    }
-//}
-
 inline void search_board(board_type& board,const Pos& start, const Pos& end) {
     std::vector<Node> open{ {start, 0} };
 
@@ -201,8 +188,10 @@ inline void search_board(board_type& board,const Pos& start, const Pos& end) {
 }
 
 int main(int argc, const char** argv) {
+#ifdef _MSVC_LANG
     std::filesystem::current_path("../");
     LOG(std::filesystem::current_path());
+#endif
     board_type board = read_board("../../board_data.txt");
     print_board(board);
     const auto& start = get_board_start(board);
