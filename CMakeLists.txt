@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.21)
 
 project(NanoDegree VERSION 1.0)
 
@@ -9,8 +9,9 @@ set(SRC_DIR src/)
 
 list(APPEND INCLUDE_DIRS include)
 
-set(CMAKE_SOURCE_DIR src)
-set(CMAKE_CURRENT_SOURCE_DIR src)
+#set(CMAKE_SOURCE_DIR src)
+#set(CMAKE_CURRENT_SOURCE_DIR src)
+
 
 add_executable(${PROJECT_NAME}
     main.cpp src/temp.cpp
@@ -18,3 +19,6 @@ add_executable(${PROJECT_NAME}
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC $INCLUDE_DIRS)
+
+
+set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/out/build")

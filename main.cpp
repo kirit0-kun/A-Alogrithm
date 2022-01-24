@@ -5,12 +5,13 @@
 #include <chrono>
 #include <sstream>
 #include <fstream>
+#include <filesystem>
 #include <math.h>
 #include "include/utils.h"
 
 typedef unsigned short element_type;
 
-enum State: element_type {
+enum class State: element_type {
     kEmpty = 0,
     kObstacle = 1,
     kStart = 2,
@@ -18,23 +19,28 @@ enum State: element_type {
     kExpanded = 4
 };
 
-
+struct Pos {
+    int x, y;
+    Pos(int x, int y) : x(x), y(y) {}
+    bool operator==(const Pos& other) const { return x == other.x && y == other.y; }
+};
 
 inline std::string cell_string(const State& state) {
     switch(state) {
-    case ::kEmpty:
+    case State::kEmpty:
         return "0   ";
-    case ::kObstacle:
+    case State::kObstacle:
         return "⛰️  ";
-    case ::kStart:
+    case State::kStart:
         return "🚦  ";
-    case ::kFinish:
+    case State::kFinish:
         return "🏁  ";
-    case ::kExpanded:
+    case State::kExpanded:
         return "🚗  ";
     }
     return "";
 }
+
 
 typedef std::vector<std::vector<State>> board_type;
 
@@ -59,7 +65,33 @@ inline board_type parse_board(std::istream& board) {
 
 inline board_type read_board(const std::string& board_file) {
     std::ifstream ifs(board_file);
+    if (!ifs.good()) {
+        throw std::exception("File ");
+    }
     return parse_board(ifs);
+}
+
+inline struct Pos get_board_start(const board_type& board) {
+    for (int y = 0; y < board.size(); y++) {
+        for (int x = 0; x < board[y].size(); x++) {
+            if (board[y][x] == State::kStart) {
+                return {x,y};
+            }
+        }
+    }
+    return { 0,0 };
+}
+
+inline struct Pos get_board_end(const board_type& board) {
+    int x = 0, y = 0;
+    for (y = 0; y < board.size(); y++) {
+        for (x = 0; x < board[y].size(); x++) {
+            if (board[y][x] == State::kFinish) {
+                return { x,y };
+            }
+        }
+    }
+    return {x-1 , y-1};
 }
 
 inline void print_board(const board_type& board) {
@@ -77,14 +109,9 @@ inline bool is_node_valid(const board_type& board, int x, int y) {
     const auto& row = board.at(y);
     if (row.size() <= x) return false;
     auto state = row.at(x);
-    return state != ::kObstacle && state != ::kExpanded;
+    return state != State::kObstacle && state != State::kExpanded;
 }
 
-struct Pos {
-    int x, y;
-    Pos(int x, int y): x(x), y(y) {}
-    bool operator==(const Pos& other) const { return x == other.x && y == other.y; }
-};
 
 struct Node {
     Pos pos;
@@ -94,7 +121,7 @@ struct Node {
     bool operator==(const Node& other) const { return pos == other.pos && g == other.g && f == other.f; }
 };
 
-inline constexpr int heuristic_function(const Pos& pos, const Pos& goal) {
+inline int heuristic_function(const Pos& pos, const Pos& goal) {
     return std::abs(goal.x - pos.x) + std::abs(goal.y - pos.y);
 }
 
@@ -102,9 +129,7 @@ inline std::vector<Node> expand_node(board_type& board, const Node& node, const 
     std::vector<Node> nodes;
     int new_g_value = node.g + 1;
     auto& pos = node.pos;
-    auto board_row = board.at(pos.y);
-    board_row[pos.x] = ::kExpanded;
-    board[pos.y] = board_row;
+    board[pos.y][pos.x] = State::kExpanded;
     Node nodes_to_text[4] = {
       {{  pos.x, pos.y-1}, new_g_value},
       {{  pos.x, pos.y+1}, new_g_value},
@@ -129,7 +154,6 @@ inline void print_road(const std::vector<Pos> road) {
     LOG(s.str().c_str());
 }
 
-
 inline void print_road(const std::vector<Node> road) {
     std::stringstream s;
     for (auto& node: road) {
@@ -151,14 +175,12 @@ inline void print_road(const std::vector<Node> road) {
 //}
 
 inline void search_board(board_type& board,const Pos& start, const Pos& end) {
-    std::vector<Node> close;
     std::vector<Node> open{ {start, 0} };
 
     while (open.size() > 0) {
         std::sort(open.begin(), open.end(), [](auto first, auto second) { return first.f < second.f; });
         auto node = open.at(0);
         open.erase(open.begin());
-        close.push_back(std::move(node));
         auto new_expansion = expand_node(board, node, end);
 
         if (new_expansion.size() != 0) {
@@ -167,21 +189,23 @@ inline void search_board(board_type& board,const Pos& start, const Pos& end) {
                                      [&end](auto node) {
                                      return node.pos == end;
                     });
-            if (last != new_expansion.end()) {
-                close.push_back(*last);
-                break;
-            } else {
+            if (last == new_expansion.end()) {
                 open.insert(open.end(), new_expansion.begin(), new_expansion.end());
+            } else {
+                break;
             }
         }
     }
 
     print_board(board);
-    print_road(close);
 }
 
 int main(int argc, const char** argv) {
+    std::filesystem::current_path("../");
+    LOG(std::filesystem::current_path());
     board_type board = read_board("../../board_data.txt");
     print_board(board);
-    search_board(board, {0,0}, {5, 4});
+    const auto& start = get_board_start(board);
+    const auto& end = get_board_end(board);
+    search_board(board, start, end);
 }
