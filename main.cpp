@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <math.h>
 #include "include/utils.h"
+#include "include/DoubleDispatch.h"
 
 typedef unsigned short element_type;
 
@@ -188,6 +189,15 @@ inline void search_board(board_type& board,const Pos& start, const Pos& end) {
 }
 
 int main(int argc, const char** argv) {
+    {
+        Interactor p;
+        const auto objects = std::vector<Object*>{ new FirstClassObject, new SecondClassObject };
+        for (auto animal : objects) {
+            p.interactWith(animal);
+            delete animal;
+        }
+    }
+
 #ifdef _MSVC_LANG
     std::filesystem::current_path("../");
     LOG(std::filesystem::current_path());

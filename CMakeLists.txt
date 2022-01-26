@@ -14,9 +14,10 @@ list(APPEND INCLUDE_DIRS include)
 
 
 add_executable(${PROJECT_NAME}
-    main.cpp src/temp.cpp
-    include/utils.h
-)
+    "main.cpp" 
+    "src/DoubleDispatch.cpp"
+    "include/utils.h"
+    "include/DoubleDispatch.h")
 
 target_include_directories(${PROJECT_NAME} PUBLIC $INCLUDE_DIRS)
 
