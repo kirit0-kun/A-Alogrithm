@@ -3,9 +3,11 @@
 #include <vector>
 #include <algorithm>
 #include <chrono>
+#include <string>
 #include <sstream>
 #include <fstream>
 #include <filesystem>
+#include <stdexcept>
 #include <math.h>
 #include "include/utils.h"
 #include "include/DoubleDispatch.h"
@@ -26,20 +28,20 @@ struct Pos {
     bool operator==(const Pos& other) const { return x == other.x && y == other.y; }
 };
 
-inline std::string cell_string(const State& state) {
+inline std::wstring cell_string(const State& state) {
     switch(state) {
     case State::kEmpty:
-        return "0   ";
+        return L"0   ";
     case State::kObstacle:
-        return "⛰️  ";
+        return L"\xe2\x9b\xb0\xef\xb8\x8f   "; // ⛰️
     case State::kStart:
-        return "🚦  ";
+        return L"\xf0\x9f\x9a\xa6  "; // 🚦
     case State::kFinish:
-        return "🏁  ";
+        return L"\xf0\x9f\x8f\x81  "; // 🏁
     case State::kExpanded:
-        return "🚗  ";
+        return L"\xf0\x9f\x9a\x97  "; // 🚗
     }
-    return "";
+    return L"";
 }
 
 
@@ -69,7 +71,7 @@ inline board_type read_board(const std::string& board_file) {
     if (!ifs.good()) {
         ifs = std::ifstream(std::string("../") + board_file);
         if (!ifs.good()) {
-            throw std::exception("File not found!");
+            throw std::invalid_argument("File not found!");
         }
     }
     return parse_board(ifs);
@@ -96,11 +98,11 @@ inline struct Pos get_board_end(const board_type& board) {
 
 inline void print_board(const board_type& board) {
     for (auto& row: board) {
-        std::stringstream line;
+        std::wstringstream line;
         for (auto& i: row) {
             line << cell_string(i);
         }
-        LOG(line.str().c_str());
+        LOG(line.str());
     }
 }
 
@@ -202,7 +204,7 @@ int main(int argc, const char** argv) {
     std::filesystem::current_path("../");
     LOG(std::filesystem::current_path());
 #endif
-    board_type board = read_board("../../board_data.txt");
+    board_type board = read_board("board_data.txt");
     print_board(board);
     const auto& start = get_board_start(board);
     const auto& end = get_board_end(board);

@@ -30,6 +30,7 @@ public:
 class Object {
 public:
 	virtual void interactWith(ObjectInteractor* interactor) = 0;
+	virtual ~Object() = default;
 };
 
 class FirstClassObject : public Object {
